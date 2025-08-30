@@ -79,6 +79,56 @@ bool DYNAMIXEL_SDK_INTERFACE::disableTorque(uint8_t ID, uint16_t ADDR)
     }
 }
 
+bool DYNAMIXEL_SDK_INTERFACE::set_watchdog(uint8_t ID, int TIMER)
+{
+    if(write1ByteTxRx(ID, ADDR_XX_BUS_WATCHDOG, static_cast<uint8_t>(TIMER)))
+    {
+        DEBUG_COUT("[DXL " << (int)ID <<  "]: Watchdog timer set!" << std::endl);
+        return true;
+    }
+    else
+    {
+        DEBUG_CERR("[DXL " << (int)ID <<  "]: Failed to set Watchdog timer." << std::endl);
+        return false;
+    }
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::set_watchdogs(std::vector<uint8_t> IDs, int TIMER)
+{
+    std::vector<uint8_t> timers(IDs.size(), static_cast<int8_t>(TIMER));
+    if(writeGroupSync(IDs, ADDR_XX_BUS_WATCHDOG, SIZE_XX_BUS_WATCHDOG, timers))
+    {
+        if(TIMER)
+            DEBUG_COUT("All DXL Watchdog timer set!" << std::endl);
+
+        return true;
+    }
+    else
+    {
+        std::cerr << "Failed to toggle torques." << std::endl << std::endl;
+        return false;
+    }
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::toggleAllTorque(std::vector<uint8_t> IDs, bool toggle)
+{
+    std::vector<uint8_t> toggles(IDs.size(), toggle);
+    if(writeGroupSync(IDs, ADDR_XX_TORQUE_ENABLE, SIZE_XX_TORQUE_ENABLE, toggles))
+    {
+        if(toggle)
+            DEBUG_COUT("All DXL torque enabled!" << std::endl);
+        else
+            DEBUG_COUT("All DXL torque disabled!" << std::endl);
+
+        return true;
+    }
+    else
+    {
+        std::cerr << "Failed to toggle torques." << std::endl << std::endl;
+        return false;
+    }
+}
+
 bool DYNAMIXEL_SDK_INTERFACE::turnOffXxLed(uint8_t ID)
 {
     if(write1ByteTxRx(ID, ADDR_XX_LED, static_cast<uint8_t>(DXL_LED::LED_OFF)))
@@ -194,6 +244,44 @@ bool DYNAMIXEL_SDK_INTERFACE::writeGroupSync(std::vector<uint8_t> IDs, uint16_t 
         uint8_t bytes[2];
         bytes[0] = DXL_LOBYTE(DXL_LOWORD(DATA[idx]));
         bytes[1] = DXL_HIBYTE(DXL_LOWORD(DATA[idx]));
+
+        if (!groupSyncWrite.addParam(IDs[idx], bytes))
+        {
+            DEBUG_CERR("[DXL " << (int)IDs[idx] <<  "]: Failed to add param with GroupSyncWrite." << std::endl);
+            return false;
+        }
+    }
+
+    int dxl_comm_result = groupSyncWrite.txPacket();
+    if (dxl_comm_result != COMM_SUCCESS)
+    {
+        DEBUG_CERR("GroupSyncWrite failed: " << packetHandler->getTxRxResult(dxl_comm_result_) << std::endl);
+        return false;
+    }
+
+    groupSyncWrite.clearParam();
+    return true;
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::writeGroupSync(std::vector<uint8_t> IDs, uint16_t ADDR, uint8_t SIZE, std::vector<uint8_t> DATA)
+{
+    std::lock_guard<std::timed_mutex> lock(mtx);
+    dynamixel::GroupSyncWrite groupSyncWrite(portHandler, packetHandler, ADDR, SIZE);
+
+    if (IDs.size() != DATA.size())
+    {
+        std::cerr << "IDs and DATA size mismatch." << std::endl;
+        return false;
+    }
+    if (SIZE != 1)
+    {
+        std::cerr << "Size of address and data size mismatch." << std::endl;
+        return false;
+    }
+
+    for (size_t idx = 0; idx < IDs.size(); idx++) {
+        uint8_t bytes[1];
+        bytes[0] = DXL_LOBYTE(DXL_LOWORD(DATA[idx]));
 
         if (!groupSyncWrite.addParam(IDs[idx], bytes))
         {

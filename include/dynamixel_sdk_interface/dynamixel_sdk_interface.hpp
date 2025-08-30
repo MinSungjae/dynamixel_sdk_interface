@@ -44,8 +44,11 @@ protected:
 
 public:
     bool reboot(uint8_t ID);
+    bool set_watchdog(uint8_t ID, int TIMER);
+    bool set_watchdogs(std::vector<uint8_t> IDs, int TIMER);
     bool enableTorque(uint8_t ID, uint16_t ADDR);
     bool disableTorque(uint8_t ID, uint16_t ADDR);
+    bool toggleAllTorque(std::vector<uint8_t> IDs, bool toggle);
 
     bool turnOnXxLed(uint8_t ID);
     bool turnOffXxLed(uint8_t ID);
@@ -55,6 +58,7 @@ public:
 
     bool writeGroupSync(std::vector<uint8_t> IDs, uint16_t ADDR, uint8_t SIZE, std::vector<int32_t> DATA);
     bool writeGroupSync(std::vector<uint8_t> IDs, uint16_t ADDR, uint8_t SIZE, std::vector<int16_t> DATA);
+    bool writeGroupSync(std::vector<uint8_t> IDs, uint16_t ADDR, uint8_t SIZE, std::vector<uint8_t> DATA);
     bool readGroupSync(std::vector<uint8_t> IDs, uint16_t ADDR, uint8_t SIZE, std::vector<uint8_t>& DATA);
     bool readGroupSync(std::vector<uint8_t> IDs, uint16_t ADDR, uint8_t SIZE, std::vector<int16_t>& DATA);
     bool readGroupSync(std::vector<uint8_t> IDs, uint16_t ADDR, uint8_t SIZE, std::vector<int32_t>& DATA);
