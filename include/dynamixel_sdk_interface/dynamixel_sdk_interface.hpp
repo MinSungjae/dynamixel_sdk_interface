@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <iostream>
+#include <map>
 #include <lib_functions/iostream_lib.h>
 
 #include <dynamixel_sdk/dynamixel_sdk.h>
@@ -10,6 +11,14 @@
 #include <dynamixel_sdk_interface/dynamixel_sdk_enums.hpp>
 #include <dynamixel_sdk_interface/dynamixel_px_addresses.hpp>
 #include <dynamixel_sdk_interface/dynamixel_xx_addresses.hpp>
+#include <dynamixel_sdk_interface/dynamixel_hx_addresses.hpp>
+
+enum class DXL_MODEL_FAMILY
+{
+    PX,
+    XX,
+    HX
+};
 
 class DYNAMIXEL_SDK_INTERFACE
 {
@@ -17,6 +26,7 @@ private:
     dynamixel::PortHandler *portHandler;
     dynamixel::PacketHandler *packetHandler;
     std::mutex mtx;
+    std::map<uint8_t, DXL_MODEL_FAMILY> model_families_;
 
     bool terminate_ = false;
 
@@ -28,7 +38,7 @@ public:
     DYNAMIXEL_SDK_INTERFACE(const char* device_name, unsigned int baudrate);
     ~DYNAMIXEL_SDK_INTERFACE();
 
-protected:
+public:
     bool write1ByteTxRx(uint8_t ID, uint16_t ADDR, uint8_t DATA);
     bool write2ByteTxRx(uint8_t ID, uint16_t ADDR, uint16_t DATA);
     bool write4ByteTxRx(uint8_t ID, uint16_t ADDR, uint32_t DATA);
@@ -71,6 +81,21 @@ public:
     bool readPresentCurrent(uint8_t ID, int16_t& present_current);
     bool readPresentVelocity(uint8_t ID, int32_t& present_velocity);
     bool readPresentPosition(uint8_t ID, int32_t& present_position);
+
+    // Model-independent wrapper API. Unregistered IDs use PX for backward
+    // compatibility. These wrappers keep mixed address tables out of callers.
+    void setModelFamily(uint8_t ID, DXL_MODEL_FAMILY family);
+    DXL_MODEL_FAMILY getModelFamily(uint8_t ID) const;
+
+    bool enableTorqueGeneral(uint8_t ID);
+    bool disableTorqueGeneral(uint8_t ID);
+    bool changeOperatingModeGeneral(uint8_t ID, DXL_OPERATING_MODE mode);
+    bool writeVelocityIGainGeneral(uint8_t ID, uint16_t velocity_i_gain);
+    bool writeProfileVelocityGeneral(uint8_t ID, int32_t profile_velocity);
+    bool writeProfileAccelerationGeneral(uint8_t ID, int32_t profile_acceleration);
+    bool readPresentPositionGeneral(const std::vector<uint8_t>& IDs, std::vector<int32_t>& DATA);
+    bool readPresentVelocityGeneral(const std::vector<uint8_t>& IDs, std::vector<int32_t>& DATA);
+    bool writeGoalPositionGeneral(const std::vector<uint8_t>& IDs, const std::vector<int32_t>& DATA);
 };
 
 #endif

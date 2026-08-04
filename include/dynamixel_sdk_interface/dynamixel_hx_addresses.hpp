@@ -1,0 +1,92 @@
+#ifndef __DYNAMIXEL_HX_ADDRESSES_HPP__
+#define __DYNAMIXEL_HX_ADDRESSES_HPP__
+
+// ROM Area
+#define ADDR_HX_MODEL_NUMBER                0
+#define ADDR_HX_MODEL_INFORMATION           2
+#define ADDR_HX_FIRMWARE_VERSION            6
+#define ADDR_HX_ID                          7
+#define ADDR_HX_BAUD_RATE                   8
+#define ADDR_HX_RETURN_DELAY_TIME           9
+#define ADDR_HX_OPERATING_MODE              11
+#define ADDR_HX_HOMING_OFFSET               13
+#define ADDR_HX_MOVING_THRESHOLD            17
+#define ADDR_HX_TEMPERATURE_LIMIT           21
+#define ADDR_HX_MAX_VOLTAGE_LIMIT           22
+#define ADDR_HX_MIN_VOLTAGE_LIMIT           24
+#define ADDR_HX_ACCELERATION_LIMIT          26
+#define ADDR_HX_TORQUE_LIMIT                30
+#define ADDR_HX_VELOCITY_LIMIT              32
+#define ADDR_HX_MAX_POSITION_LIMIT          36
+#define ADDR_HX_MIN_POSITION_LIMIT          40
+
+#define SIZE_HX_MODEL_NUMBER                2
+#define SIZE_HX_MODEL_INFORMATION           4
+#define SIZE_HX_FIRMWARE_VERSION            1
+#define SIZE_HX_ID                          1
+#define SIZE_HX_BAUD_RATE                   1
+#define SIZE_HX_RETURN_DELAY_TIME           1
+#define SIZE_HX_OPERATING_MODE              1
+#define SIZE_HX_HOMING_OFFSET               4
+#define SIZE_HX_MOVING_THRESHOLD            4
+#define SIZE_HX_TEMPERATURE_LIMIT           1
+#define SIZE_HX_MAX_VOLTAGE_LIMIT           2
+#define SIZE_HX_MIN_VOLTAGE_LIMIT           2
+#define SIZE_HX_ACCELERATION_LIMIT          4
+#define SIZE_HX_TORQUE_LIMIT                2
+#define SIZE_HX_VELOCITY_LIMIT              4
+#define SIZE_HX_MAX_POSITION_LIMIT          4
+#define SIZE_HX_MIN_POSITION_LIMIT          4
+
+// RAM Area
+#define ADDR_HX_TORQUE_ENABLE               562
+#define ADDR_HX_LED_RED                     563
+#define ADDR_HX_LED_GREEN                   564
+#define ADDR_HX_LED_BLUE                    565
+#define ADDR_HX_VELOCITY_I_GAIN             586
+#define ADDR_HX_VELOCITY_P_GAIN             588
+#define ADDR_HX_POSITION_P_GAIN             594
+#define ADDR_HX_GOAL_POSITION               596
+#define ADDR_HX_GOAL_VELOCITY               600
+#define ADDR_HX_GOAL_TORQUE                 604
+#define ADDR_HX_GOAL_ACCELERATION           606
+#define ADDR_HX_MOVING                      610
+#define ADDR_HX_PRESENT_POSITION            611
+#define ADDR_HX_PRESENT_VELOCITY            615
+#define ADDR_HX_PRESENT_CURRENT             621
+#define ADDR_HX_PRESENT_INPUT_VOLTAGE       623
+#define ADDR_HX_PRESENT_TEMPERATURE         625
+#define ADDR_HX_EXTERNAL_PORT_DATA_1        626
+#define ADDR_HX_EXTERNAL_PORT_DATA_2        628
+#define ADDR_HX_EXTERNAL_PORT_DATA_3        630
+#define ADDR_HX_EXTERNAL_PORT_DATA_4        632
+#define ADDR_HX_REGISTERED_INSTRUCTION      890
+#define ADDR_HX_STATUS_RETURN_LEVEL         891
+#define ADDR_HX_HARDWARE_ERROR_STATUS       892
+
+#define SIZE_HX_TORQUE_ENABLE               1
+#define SIZE_HX_LED_RED                     1
+#define SIZE_HX_LED_GREEN                   1
+#define SIZE_HX_LED_BLUE                    1
+#define SIZE_HX_VELOCITY_I_GAIN             2
+#define SIZE_HX_VELOCITY_P_GAIN             2
+#define SIZE_HX_POSITION_P_GAIN             2
+#define SIZE_HX_GOAL_POSITION               4
+#define SIZE_HX_GOAL_VELOCITY               4
+#define SIZE_HX_GOAL_TORQUE                 2
+#define SIZE_HX_GOAL_ACCELERATION           4
+#define SIZE_HX_MOVING                      1
+#define SIZE_HX_PRESENT_POSITION            4
+#define SIZE_HX_PRESENT_VELOCITY            4
+#define SIZE_HX_PRESENT_CURRENT             2
+#define SIZE_HX_PRESENT_INPUT_VOLTAGE       2
+#define SIZE_HX_PRESENT_TEMPERATURE         1
+#define SIZE_HX_EXTERNAL_PORT_DATA_1        2
+#define SIZE_HX_EXTERNAL_PORT_DATA_2        2
+#define SIZE_HX_EXTERNAL_PORT_DATA_3        2
+#define SIZE_HX_EXTERNAL_PORT_DATA_4        2
+#define SIZE_HX_REGISTERED_INSTRUCTION      1
+#define SIZE_HX_STATUS_RETURN_LEVEL         1
+#define SIZE_HX_HARDWARE_ERROR_STATUS       1
+
+#endif

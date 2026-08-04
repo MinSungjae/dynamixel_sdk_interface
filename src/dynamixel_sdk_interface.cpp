@@ -653,3 +653,140 @@ bool DYNAMIXEL_SDK_INTERFACE::read4ByteTxRx(uint8_t ID, uint16_t ADDR, uint32_t*
         return false;        
     }
 }
+
+void DYNAMIXEL_SDK_INTERFACE::setModelFamily(uint8_t ID, DXL_MODEL_FAMILY family)
+{
+    model_families_[ID] = family;
+}
+
+DXL_MODEL_FAMILY DYNAMIXEL_SDK_INTERFACE::getModelFamily(uint8_t ID) const
+{
+    const auto family = model_families_.find(ID);
+    return family == model_families_.end() ? DXL_MODEL_FAMILY::PX : family->second;
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::enableTorqueGeneral(uint8_t ID)
+{
+    uint16_t address = ADDR_PX_TORQUE_ENABLE;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_TORQUE_ENABLE;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_TORQUE_ENABLE;
+    return write1ByteTxRx(ID, address, static_cast<uint8_t>(DXL_TORQUE::TORQUE_ON));
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::disableTorqueGeneral(uint8_t ID)
+{
+    uint16_t address = ADDR_PX_TORQUE_ENABLE;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_TORQUE_ENABLE;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_TORQUE_ENABLE;
+    return write1ByteTxRx(ID, address, static_cast<uint8_t>(DXL_TORQUE::TORQUE_OFF));
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::changeOperatingModeGeneral(uint8_t ID, DXL_OPERATING_MODE mode)
+{
+    uint16_t address = ADDR_PX_OPERATING_MODE;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_OPERATING_MODE;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_OPERATING_MODE;
+    return write1ByteTxRx(ID, address, static_cast<uint8_t>(mode));
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::writeVelocityIGainGeneral(uint8_t ID, uint16_t velocity_i_gain)
+{
+    uint16_t address = ADDR_PX_VELOCITY_I_GAIN;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_VELOCITY_I_GAIN;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_VELOCITY_I_GAIN;
+    return write2ByteTxRx(ID, address, velocity_i_gain);
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::writeProfileVelocityGeneral(uint8_t ID, int32_t profile_velocity)
+{
+    uint16_t address = ADDR_PX_PROFILE_VELOCITY;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_PROFILE_VELOCITY;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_GOAL_VELOCITY;
+    return write4ByteTxRx(ID, address, static_cast<uint32_t>(profile_velocity));
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::writeProfileAccelerationGeneral(uint8_t ID, int32_t profile_acceleration)
+{
+    uint16_t address = ADDR_PX_PROFILE_ACCELERATION;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_PROFILE_ACCELERATION;
+    if(getModelFamily(ID) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_GOAL_ACCELERATION;
+    return write4ByteTxRx(ID, address, static_cast<uint32_t>(profile_acceleration));
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::readPresentPositionGeneral(
+    const std::vector<uint8_t>& IDs, std::vector<int32_t>& DATA)
+{
+    DATA.resize(IDs.size());
+    bool success = true;
+    std::map<uint16_t, std::vector<size_t>> groups;
+    for(size_t idx = 0; idx < IDs.size(); ++idx)
+    {
+        uint16_t address = ADDR_PX_PRESENT_POSITION;
+        if(getModelFamily(IDs[idx]) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_PRESENT_POSITION;
+        if(getModelFamily(IDs[idx]) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_PRESENT_POSITION;
+        groups[address].push_back(idx);
+    }
+    for(const auto& group : groups)
+    {
+        std::vector<uint8_t> ids;
+        std::vector<int32_t> values;
+        for(size_t idx : group.second) ids.push_back(IDs[idx]);
+        success &= readGroupSync(ids, group.first, 4, values);
+        for(size_t idx = 0; idx < group.second.size(); ++idx)
+            DATA[group.second[idx]] = values[idx];
+    }
+    return success;
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::readPresentVelocityGeneral(
+    const std::vector<uint8_t>& IDs, std::vector<int32_t>& DATA)
+{
+    DATA.resize(IDs.size());
+    bool success = true;
+    std::map<uint16_t, std::vector<size_t>> groups;
+    for(size_t idx = 0; idx < IDs.size(); ++idx)
+    {
+        uint16_t address = ADDR_PX_PRESENT_VELOCITY;
+        if(getModelFamily(IDs[idx]) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_PRESENT_VELOCITY;
+        if(getModelFamily(IDs[idx]) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_PRESENT_VELOCITY;
+        groups[address].push_back(idx);
+    }
+    for(const auto& group : groups)
+    {
+        std::vector<uint8_t> ids;
+        std::vector<int32_t> values;
+        for(size_t idx : group.second) ids.push_back(IDs[idx]);
+        success &= readGroupSync(ids, group.first, 4, values);
+        for(size_t idx = 0; idx < group.second.size(); ++idx)
+            DATA[group.second[idx]] = values[idx];
+    }
+    return success;
+}
+
+bool DYNAMIXEL_SDK_INTERFACE::writeGoalPositionGeneral(
+    const std::vector<uint8_t>& IDs, const std::vector<int32_t>& DATA)
+{
+    if(IDs.size() != DATA.size()) return false;
+
+    bool success = true;
+    std::map<uint16_t, std::vector<size_t>> groups;
+    for(size_t idx = 0; idx < IDs.size(); ++idx)
+    {
+        uint16_t address = ADDR_PX_GOAL_POSITION;
+        if(getModelFamily(IDs[idx]) == DXL_MODEL_FAMILY::XX) address = ADDR_XX_GOAL_POSITION;
+        if(getModelFamily(IDs[idx]) == DXL_MODEL_FAMILY::HX) address = ADDR_HX_GOAL_POSITION;
+        groups[address].push_back(idx);
+    }
+    for(const auto& group : groups)
+    {
+        std::vector<uint8_t> ids;
+        std::vector<int32_t> values;
+        for(size_t idx : group.second)
+        {
+            ids.push_back(IDs[idx]);
+            values.push_back(DATA[idx]);
+        }
+        success &= writeGroupSync(ids, group.first, 4, values);
+    }
+    return success;
+}
