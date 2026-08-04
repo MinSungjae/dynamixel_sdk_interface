@@ -19,6 +19,7 @@
 #define ADDR_XX_MIN_VOLTAGE_LIMIT           34
 #define ADDR_XX_PWM_LIMIT                   36
 #define ADDR_XX_CURRENT_LIMIT               38
+#define ADDR_XX_ACCELERATION_LIMIT          40
 #define ADDR_XX_VELOCITY_LIMIT              44
 #define ADDR_XX_MAX_POSITION_LIMIT          48
 #define ADDR_XX_MIN_POSITION_LIMIT          52
@@ -43,6 +44,7 @@
 #define SIZE_XX_MIN_VOLTAGE_LIMIT           2
 #define SIZE_XX_PWM_LIMIT                   2
 #define SIZE_XX_CURRENT_LIMIT               2
+#define SIZE_XX_ACCELERATION_LIMIT          4
 #define SIZE_XX_VELOCITY_LIMIT              4
 #define SIZE_XX_MAX_POSITION_LIMIT          4
 #define SIZE_XX_MIN_POSITION_LIMIT          4

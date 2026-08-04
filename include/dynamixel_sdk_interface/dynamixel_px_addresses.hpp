@@ -62,6 +62,7 @@ namespace DYNAMIXEL{
         constexpr uint16_t POSITION_TRAJECTORY    = 588;
         constexpr uint16_t PRESENT_INPUT_VOLTAGE  = 592;
         constexpr uint16_t PRESENT_TEMPERATURE    = 594;
+        constexpr uint16_t BACKUP_READY           = 878;
 
         constexpr uint8_t SIZE_MODEL_NUMBER            = 2;
         constexpr uint8_t SIZE_MODEL_INFORMATION       = 4;
@@ -122,6 +123,7 @@ namespace DYNAMIXEL{
         constexpr uint8_t SIZE_POSITION_TRAJECTORY     = 4;
         constexpr uint8_t SIZE_PRESENT_INPUT_VOLTAGE   = 2;
         constexpr uint8_t SIZE_PRESENT_TEMPERATURE     = 1;
+        constexpr uint8_t SIZE_BACKUP_READY            = 1;
     }
 }
 
@@ -215,6 +217,7 @@ namespace DYNAMIXEL{
 #define ADDR_PX_POSITION_TRAJECTORY         588
 #define ADDR_PX_PRESENT_INPUT_VOLTAGE       592
 #define ADDR_PX_PRESENT_TEMPERATURE         594
+#define ADDR_PX_BACKUP_READY                878
 
 #define SIZE_PX_TORQUE_ENABLE               1
 #define SIZE_PX_LED_RED                     1
@@ -248,5 +251,6 @@ namespace DYNAMIXEL{
 #define SIZE_PX_POSITION_TRAJECTORY         4
 #define SIZE_PX_PRESENT_INPUT_VOLTAGE       2
 #define SIZE_PX_PRESENT_TEMPERATURE         1
+#define SIZE_PX_BACKUP_READY                1
 
 #endif

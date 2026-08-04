@@ -19,6 +19,7 @@
 #define ADDR_HX_VELOCITY_LIMIT              32
 #define ADDR_HX_MAX_POSITION_LIMIT          36
 #define ADDR_HX_MIN_POSITION_LIMIT          40
+#define ADDR_HX_SHUTDOWN                    48
 
 #define SIZE_HX_MODEL_NUMBER                2
 #define SIZE_HX_MODEL_INFORMATION           4
@@ -37,6 +38,7 @@
 #define SIZE_HX_VELOCITY_LIMIT              4
 #define SIZE_HX_MAX_POSITION_LIMIT          4
 #define SIZE_HX_MIN_POSITION_LIMIT          4
+#define SIZE_HX_SHUTDOWN                    1
 
 // RAM Area
 #define ADDR_HX_TORQUE_ENABLE               562
