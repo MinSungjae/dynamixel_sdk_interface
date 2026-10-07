@@ -1,18 +1,111 @@
 # dynamixel_sdk_interface
 
-This ROS 1 package wraps DYNAMIXEL Protocol 2.0 communication behind a thread-safe, model-family-aware C++ API.
+This ROS1/ROS2 package wraps DYNAMIXEL Protocol 2.0 communication behind a thread-safe, model-family-aware C++ API. The communication library and public headers do not use a ROS client API. The scanner selects roscpp or rclcpp at build time.
 
 ## Build
 
-Place this package, `dynamixel_sdk`, and `lib_functions` in the same catkin workspace, then build and source it:
+This package requires [`lib_functions`](https://github.com/MinSungjae/lib_functions),
+which supplies the stream utilities included by the public interface header.
+Place it in the same workspace's `src` directory before building. For a new
+workspace where the package is not already present:
 
 ```bash
+cd ~/pibot_ws/src  # Use your own workspace path for ROS1.
+git clone https://github.com/MinSungjae/lib_functions.git
+```
+
+Use a `lib_functions` revision that supports your selected ROS build system
+(catkin for ROS1, ament_cmake for ROS2). The current server uses the ROS1/ROS2
+compatible version prepared alongside this interface. It is a header-only
+package: declaring the CMake/package dependency supplies the include paths;
+no separate `lib_functions` binary library needs to be linked.
+
+Source exactly one ROS environment in a fresh terminal. `ROS_VERSION` selects catkin or ament_cmake in CMake and the format-3 package manifest. Use separate build/install directories for different ROS distributions. `dynamixel_sdk` must be the appropriate ROS1 or ROS2 SDK package; `lib_functions` must also support the selected build system.
+
+ROS1 (Melodic example): place this package, the ROS1 `dynamixel_sdk`, and `lib_functions` in the same catkin workspace, then:
+
+```bash
+source /opt/ros/melodic/setup.bash
 cd ~/catkin_ws
 catkin_make
 source devel/setup.bash
 ```
 
+ROS2 (Humble, on the current server):
+
+```bash
+source /opt/ros/humble/setup.bash
+cd ~/pibot_ws
+colcon build --packages-up-to dynamixel_sdk_interface
+source install/setup.bash
+```
+
+## Use the library in another package
+
+Validation on 2026-10-07: Ubuntu 22.04 / ROS2 Humble package build and install,
+external consumers through both ament dependencies and the imported CMake target,
+model lookup/error-state smoke tests, and scanner/launch parameter validation
+passed. Tests used an empty or nonexistent device path and did not communicate
+with motors. The ROS1 branch preserves the Melodic API and build layout, but was
+not rebuilt in this session.
+
+Keep the existing C++ API and include path:
+
+```cpp
+#include <dynamixel_sdk_interface/dynamixel_sdk_interface.hpp>
+```
+
+Add `<depend>dynamixel_sdk_interface</depend>` to the consumer's `package.xml`.
+For ROS1:
+
+```cmake
+find_package(catkin REQUIRED COMPONENTS roscpp dynamixel_sdk_interface)
+catkin_package(CATKIN_DEPENDS dynamixel_sdk_interface)
+add_executable(my_node src/my_node.cpp)
+target_include_directories(my_node PRIVATE ${catkin_INCLUDE_DIRS})
+target_link_libraries(my_node ${catkin_LIBRARIES})
+```
+
+For ROS2:
+
+```cmake
+find_package(ament_cmake REQUIRED)
+find_package(dynamixel_sdk_interface REQUIRED)
+add_executable(my_node src/my_node.cpp)
+ament_target_dependencies(my_node dynamixel_sdk_interface)
+```
+
+Alternatively, ROS2 consumers can link the imported target:
+
+```cmake
+target_link_libraries(my_node PRIVATE
+  dynamixel_sdk_interface::dynamixel_sdk_interface)
+```
+
+The package exports its public headers, shared library, `lib_functions`,
+`dynamixel_sdk`, and thread dependency. If the consumer exports public headers
+that include this interface, also use `ament_export_dependencies(dynamixel_sdk_interface)`
+(ROS2) or `catkin_package(CATKIN_DEPENDS dynamixel_sdk_interface)` (ROS1).
+
 ## Scan a DYNAMIXEL bus
+
+ROS2 uses the same node name, parameter names, defaults, and exit statuses.
+Use the ROS2 launch file:
+
+```bash
+ros2 launch dynamixel_sdk_interface dynamixel_scan.launch.py \
+  device_name:=/dev/ttyUSB0 baudrate:=4000000 min_id:=1 max_id:=4
+```
+
+Or run directly:
+
+```bash
+ros2 run dynamixel_sdk_interface dynamixel_scan_node --ros-args \
+  -p device_name:=/dev/ttyUSB0 -p baudrate:=4000000 -p min_id:=1 -p max_id:=4
+```
+
+The following `roslaunch` / `rosrun` examples are for ROS1. ROS1 keeps the
+original `dynamixel_scan.launch`; ROS2 installs `dynamixel_scan.launch.py`.
 
 `dynamixel_scan_node` is a read-only, one-shot diagnostic executable. It opens the selected serial device, sends one Protocol 2.0 Broadcast Ping, queries the model number of each responding ID, prints the result, and exits. It does not change torque, operating mode, ID, baud rate, or EEPROM values.
 
@@ -147,8 +240,15 @@ Bulk Write success confirms packet transmission, not per-device acceptance. Use 
 
 `DXL_MODEL_FAMILY` selects the control-table layout:
 
+All four address headers provide typed C++11 constants under `DYNAMIXEL::PX`,
+`DYNAMIXEL::HX`, `DYNAMIXEL::XX`, or `DYNAMIXEL::HAX` (for example,
+`DYNAMIXEL::HX::GOAL_POSITION` and `DYNAMIXEL::XX::SIZE_GOAL_POSITION`). Each header
+can be included on its own. Existing numeric `ADDR_*` / `SIZE_*` macros remain
+available, including use in preprocessor conditions.
+
 - `PX`: DYNAMIXEL-P / PRO+ layout
 - `HX`: legacy DYNAMIXEL PRO H layout
+- `HAX`: DYNAMIXEL PRO H with Advanced firmware, model suffix `R(A)`
 - `XX`: common X-series layout
 
 The family alone is sufficient for raw register commands. Physical-unit conversion additionally requires exact model metadata because products sharing a control table can have different position resolution, velocity scale, and current scale.
@@ -165,8 +265,64 @@ Built-in model-number mappings:
 | `2100` | PM42-010-S260-R | PX | 526,374 |
 | `54024` | H54-200-S500-R | HX | 501,923 |
 | `53768` | H54-100-S500-R | HX | 501,923 |
+| `54025` | H54-200-S500-R(A) | HAX | 1,003,846 |
+| `53769` | H54-100-S500-R(A) | HAX | 1,003,846 |
+| `51201` | H42-20-S300-R(A) | HAX | 607,500 |
 
-For the current arm, manual configuration is equivalent to:
+### PRO H-series Advanced firmware (R(A))
+
+The new public header is `dynamixel_hax_addresses.hpp`. It is self-contained and
+provides both `DYNAMIXEL::HAX::*` constants and `ADDR_HAX_*` / `SIZE_HAX_*` macros,
+including external-port and indirect-address/data entries. Common logical control
+items resolve through `DXL_MODEL_FAMILY::HAX`; external ports and indirect entries
+can use the existing raw-register API.
+
+The official H(A) table differs from legacy `HX`: Torque Enable is 512, Goal
+Position is 564, and Present Position is 580. H(A) uses 0.01 rpm per velocity
+unit and 1 mA per current unit. H54 R(A) has 1,003,846 pulse/rev; H42 R(A) has
+607,500 pulse/rev. H(A) has distinct Current Limit, Goal Current, and Profile
+Acceleration/Velocity registers. Registers absent from the H(A) table, including
+Protocol Type, Startup Configuration and Backup Ready, are reported unsupported.
+The legacy `HX` table and its unit conversions are unchanged.
+
+Select the table from the model number reported by Ping:
+
+```cpp
+if (!dxl.detectAndConfigureDevice(id)) {
+    // Inspect dxl.getLastResult() before issuing commands.
+}
+```
+
+For manual H54-100-S500-R(A) configuration:
+
+```cpp
+DXL_DEVICE_INFO info;
+if (DYNAMIXEL_SDK_INTERFACE::makeDeviceInfoForModelNumber(53769, info)) {
+    dxl.setDeviceInfo(id, info);
+}
+```
+
+`makeHax54DeviceInfo()` and `makeHax42DeviceInfo()` are also available. For raw
+register operations only, `dxl.setModelFamily(id, DXL_MODEL_FAMILY::HAX)` selects
+the table but does not supply physical-unit conversion metadata. Existing callers
+that explicitly select `HX` or use `ADDR_HX_*` must select HAX after a firmware
+upgrade; low-level address-based calls are not automatically remapped. This code
+supports the upgraded device; it does not install firmware on the actuator.
+
+References: ROBOTIS [H54-100 R(A)](https://emanual.robotis.com/docs/en/dxl/pro/h54-100-s500-ra/),
+[H54-200 R(A)](https://emanual.robotis.com/docs/en/dxl/pro/h54-200-s500-ra/),
+[H42-20 R(A)](https://emanual.robotis.com/docs/en/dxl/pro/h42-20-s300-ra/).
+
+HAX validation (2026-10-07, Ubuntu 22.04 / ROS2 Humble): package build, CTest,
+the standalone C++11 address header, and installed consumers using both ament
+dependencies and the imported target passed. Tests check 53 common register
+entries against official table values, all three R(A) model mappings, signed
+position/current and velocity conversions, unsupported registers/modes, and
+legacy HX/PX/XX regressions. No motor communication or firmware flashing was
+performed. Run `colcon test --packages-select dynamixel_sdk_interface` to repeat
+the hardware-free control-table test.
+
+For the original arm configuration, manual configuration is equivalent to:
 
 ```cpp
 dxl.setDeviceInfo(1, DYNAMIXEL_SDK_INTERFACE::makePh54DeviceInfo());
@@ -183,7 +339,7 @@ Manual metadata is a fallback; automatic model-number detection is safer when ex
 
 - `broadcastPing()` discovers responding Protocol 2.0 IDs without scanning every ID individually.
 - `readControlItem()` and `writeControlItem()` resolve logical control items to family-specific addresses.
-- `readControlItems()` and `writeControlItems()` use Bulk Read/Write, so mixed PX/HX groups are supported.
+- `readControlItems()` and `writeControlItems()` use Bulk Read/Write, so mixed PX/HX/HAX groups are supported.
 - `writeControlItemsChecked()` sends individual Tx/Rx writes when configuration code must inspect each device response.
 - Register width, signedness, and read-only access are validated before transmission.
 - Typed convenience functions cover torque, operating mode, watchdog, gains, PWM/current/velocity/position goals, status, and SI-unit conversion.

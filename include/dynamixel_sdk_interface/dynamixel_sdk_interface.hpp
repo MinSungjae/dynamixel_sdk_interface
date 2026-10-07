@@ -14,6 +14,7 @@
 #include <dynamixel_sdk/dynamixel_sdk.h>
 
 #include <dynamixel_sdk_interface/dynamixel_hx_addresses.hpp>
+#include <dynamixel_sdk_interface/dynamixel_hax_addresses.hpp>
 #include <dynamixel_sdk_interface/dynamixel_px_addresses.hpp>
 #include <dynamixel_sdk_interface/dynamixel_sdk_enums.hpp>
 #include <dynamixel_sdk_interface/dynamixel_xx_addresses.hpp>
@@ -22,7 +23,8 @@ enum class DXL_MODEL_FAMILY
 {
     PX,
     XX,
-    HX
+    HX,
+    HAX  // PRO H-series with Advanced firmware (R(A)); legacy HX is unchanged.
 };
 
 enum class DXL_CONTROL_ITEM
@@ -173,12 +175,19 @@ namespace DXL_MODEL_CONSTANTS
     constexpr uint16_t PM42_010_MODEL_NUMBER = 2100;
     constexpr uint16_t LEGACY_H54_200_MODEL_NUMBER = 54024;
     constexpr uint16_t LEGACY_H54_100_MODEL_NUMBER = 53768;
+    constexpr uint16_t HAX_H54_200_MODEL_NUMBER = 54025;
+    constexpr uint16_t HAX_H54_100_MODEL_NUMBER = 53769;
+    constexpr uint16_t HAX_H42_020_MODEL_NUMBER = 51201;
 
     constexpr double PH54_POSITION_RESOLUTION = 1003846.0;
     constexpr double PH42_POSITION_RESOLUTION = 607500.0;
     constexpr double PM54_POSITION_RESOLUTION = 502834.0;
     constexpr double PM42_POSITION_RESOLUTION = 526374.0;
     constexpr double LEGACY_H54_POSITION_RESOLUTION = 501923.0;
+    constexpr double HAX_H54_POSITION_RESOLUTION = 1003846.0;
+    constexpr double HAX_H42_POSITION_RESOLUTION = 607500.0;
+    constexpr double HAX_VELOCITY_UNIT_RPM = 0.01;
+    constexpr double HAX_CURRENT_UNIT_AMPERE = 0.001;
     constexpr double X_SERIES_12_BIT_POSITION_RESOLUTION = 4096.0;
     constexpr double PH54_VELOCITY_UNIT_RPM = 0.01;
     constexpr double LEGACY_H54_VELOCITY_UNIT_RPM = 0.00199234;
@@ -279,6 +288,8 @@ public:
 
     static DXL_DEVICE_INFO makePh54DeviceInfo();
     static DXL_DEVICE_INFO makeLegacyH54DeviceInfo();
+    static DXL_DEVICE_INFO makeHax54DeviceInfo();
+    static DXL_DEVICE_INFO makeHax42DeviceInfo();
     static DXL_DEVICE_INFO makeCommonXSeriesDeviceInfo();
     static bool makeDeviceInfoForModelNumber(uint16_t model_number, DXL_DEVICE_INFO& info);
 

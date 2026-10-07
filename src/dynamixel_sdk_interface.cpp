@@ -740,6 +740,67 @@ bool DYNAMIXEL_SDK_INTERFACE::getRegisterInfo(
         }
     }
 
+    if(family == DXL_MODEL_FAMILY::HAX)
+    {
+        switch(item)
+        {
+            case DXL_CONTROL_ITEM::MODEL_NUMBER: return set_read_only(ADDR_HAX_MODEL_NUMBER, SIZE_HAX_MODEL_NUMBER, false);
+            case DXL_CONTROL_ITEM::MODEL_INFORMATION: return set_read_only(ADDR_HAX_MODEL_INFORMATION, SIZE_HAX_MODEL_INFORMATION, false);
+            case DXL_CONTROL_ITEM::FIRMWARE_VERSION: return set_read_only(ADDR_HAX_FIRMWARE_VERSION, SIZE_HAX_FIRMWARE_VERSION, false);
+            case DXL_CONTROL_ITEM::ID: return set_info(ADDR_HAX_ID, SIZE_HAX_ID, false);
+            case DXL_CONTROL_ITEM::BAUD_RATE: return set_info(ADDR_HAX_BAUD_RATE, SIZE_HAX_BAUD_RATE, false);
+            case DXL_CONTROL_ITEM::RETURN_DELAY_TIME: return set_info(ADDR_HAX_RETURN_DELAY_TIME, SIZE_HAX_RETURN_DELAY_TIME, false);
+            case DXL_CONTROL_ITEM::DRIVE_MODE: return set_info(ADDR_HAX_DRIVE_MODE, SIZE_HAX_DRIVE_MODE, false);
+            case DXL_CONTROL_ITEM::OPERATING_MODE: return set_info(ADDR_HAX_OPERATING_MODE, SIZE_HAX_OPERATING_MODE, false);
+            case DXL_CONTROL_ITEM::SECONDARY_ID: return set_info(ADDR_HAX_SECONDARY_ID, SIZE_HAX_SECONDARY_ID, false);
+            case DXL_CONTROL_ITEM::HOMING_OFFSET: return set_info(ADDR_HAX_HOMING_OFFSET, SIZE_HAX_HOMING_OFFSET, true);
+            case DXL_CONTROL_ITEM::MOVING_THRESHOLD: return set_info(ADDR_HAX_MOVING_THRESHOLD, SIZE_HAX_MOVING_THRESHOLD, false);
+            case DXL_CONTROL_ITEM::TEMPERATURE_LIMIT: return set_info(ADDR_HAX_TEMPERATURE_LIMIT, SIZE_HAX_TEMPERATURE_LIMIT, false);
+            case DXL_CONTROL_ITEM::MAX_VOLTAGE_LIMIT: return set_info(ADDR_HAX_MAX_VOLTAGE_LIMIT, SIZE_HAX_MAX_VOLTAGE_LIMIT, false);
+            case DXL_CONTROL_ITEM::MIN_VOLTAGE_LIMIT: return set_info(ADDR_HAX_MIN_VOLTAGE_LIMIT, SIZE_HAX_MIN_VOLTAGE_LIMIT, false);
+            case DXL_CONTROL_ITEM::PWM_LIMIT: return set_info(ADDR_HAX_PWM_LIMIT, SIZE_HAX_PWM_LIMIT, false);
+            case DXL_CONTROL_ITEM::CURRENT_LIMIT: return set_info(ADDR_HAX_CURRENT_LIMIT, SIZE_HAX_CURRENT_LIMIT, false);
+            case DXL_CONTROL_ITEM::ACCELERATION_LIMIT: return set_info(ADDR_HAX_ACCELERATION_LIMIT, SIZE_HAX_ACCELERATION_LIMIT, false);
+            case DXL_CONTROL_ITEM::VELOCITY_LIMIT: return set_info(ADDR_HAX_VELOCITY_LIMIT, SIZE_HAX_VELOCITY_LIMIT, false);
+            case DXL_CONTROL_ITEM::MAX_POSITION_LIMIT: return set_info(ADDR_HAX_MAX_POSITION_LIMIT, SIZE_HAX_MAX_POSITION_LIMIT, true);
+            case DXL_CONTROL_ITEM::MIN_POSITION_LIMIT: return set_info(ADDR_HAX_MIN_POSITION_LIMIT, SIZE_HAX_MIN_POSITION_LIMIT, true);
+            case DXL_CONTROL_ITEM::SHUTDOWN: return set_info(ADDR_HAX_SHUTDOWN, SIZE_HAX_SHUTDOWN, false);
+            case DXL_CONTROL_ITEM::TORQUE_ENABLE: return set_info(ADDR_HAX_TORQUE_ENABLE, SIZE_HAX_TORQUE_ENABLE, false);
+            case DXL_CONTROL_ITEM::LED_RED: return set_info(ADDR_HAX_LED_RED, SIZE_HAX_LED_RED, false);
+            case DXL_CONTROL_ITEM::LED_GREEN: return set_info(ADDR_HAX_LED_GREEN, SIZE_HAX_LED_GREEN, false);
+            case DXL_CONTROL_ITEM::LED_BLUE: return set_info(ADDR_HAX_LED_BLUE, SIZE_HAX_LED_BLUE, false);
+            case DXL_CONTROL_ITEM::STATUS_RETURN_LEVEL: return set_info(ADDR_HAX_STATUS_RETURN_LEVEL, SIZE_HAX_STATUS_RETURN_LEVEL, false);
+            case DXL_CONTROL_ITEM::REGISTERED_INSTRUCTION: return set_read_only(ADDR_HAX_REGISTERED_INSTRUCTION, SIZE_HAX_REGISTERED_INSTRUCTION, false);
+            case DXL_CONTROL_ITEM::HARDWARE_ERROR_STATUS: return set_read_only(ADDR_HAX_HARDWARE_ERROR_STATUS, SIZE_HAX_HARDWARE_ERROR_STATUS, false);
+            case DXL_CONTROL_ITEM::VELOCITY_I_GAIN: return set_info(ADDR_HAX_VELOCITY_I_GAIN, SIZE_HAX_VELOCITY_I_GAIN, false);
+            case DXL_CONTROL_ITEM::VELOCITY_P_GAIN: return set_info(ADDR_HAX_VELOCITY_P_GAIN, SIZE_HAX_VELOCITY_P_GAIN, false);
+            case DXL_CONTROL_ITEM::POSITION_D_GAIN: return set_info(ADDR_HAX_POSITION_D_GAIN, SIZE_HAX_POSITION_D_GAIN, false);
+            case DXL_CONTROL_ITEM::POSITION_I_GAIN: return set_info(ADDR_HAX_POSITION_I_GAIN, SIZE_HAX_POSITION_I_GAIN, false);
+            case DXL_CONTROL_ITEM::POSITION_P_GAIN: return set_info(ADDR_HAX_POSITION_P_GAIN, SIZE_HAX_POSITION_P_GAIN, false);
+            case DXL_CONTROL_ITEM::FEEDFORWARD_2ND_GAIN: return set_info(ADDR_HAX_FEEDFORWARD_2ND_GAIN, SIZE_HAX_FEEDFORWARD_2ND_GAIN, false);
+            case DXL_CONTROL_ITEM::FEEDFORWARD_1ST_GAIN: return set_info(ADDR_HAX_FEEDFORWARD_1ST_GAIN, SIZE_HAX_FEEDFORWARD_1ST_GAIN, false);
+            case DXL_CONTROL_ITEM::BUS_WATCHDOG: return set_info(ADDR_HAX_BUS_WATCHDOG, SIZE_HAX_BUS_WATCHDOG, true);
+            case DXL_CONTROL_ITEM::GOAL_PWM: return set_info(ADDR_HAX_GOAL_PWM, SIZE_HAX_GOAL_PWM, true);
+            case DXL_CONTROL_ITEM::GOAL_CURRENT: return set_info(ADDR_HAX_GOAL_CURRENT, SIZE_HAX_GOAL_CURRENT, true);
+            case DXL_CONTROL_ITEM::GOAL_VELOCITY: return set_info(ADDR_HAX_GOAL_VELOCITY, SIZE_HAX_GOAL_VELOCITY, true);
+            case DXL_CONTROL_ITEM::PROFILE_ACCELERATION: return set_info(ADDR_HAX_PROFILE_ACCELERATION, SIZE_HAX_PROFILE_ACCELERATION, false);
+            case DXL_CONTROL_ITEM::PROFILE_VELOCITY: return set_info(ADDR_HAX_PROFILE_VELOCITY, SIZE_HAX_PROFILE_VELOCITY, false);
+            case DXL_CONTROL_ITEM::GOAL_POSITION: return set_info(ADDR_HAX_GOAL_POSITION, SIZE_HAX_GOAL_POSITION, true);
+            case DXL_CONTROL_ITEM::REALTIME_TICK: return set_read_only(ADDR_HAX_REALTIME_TICK, SIZE_HAX_REALTIME_TICK, false);
+            case DXL_CONTROL_ITEM::MOVING: return set_read_only(ADDR_HAX_MOVING, SIZE_HAX_MOVING, false);
+            case DXL_CONTROL_ITEM::MOVING_STATUS: return set_read_only(ADDR_HAX_MOVING_STATUS, SIZE_HAX_MOVING_STATUS, false);
+            case DXL_CONTROL_ITEM::PRESENT_PWM: return set_read_only(ADDR_HAX_PRESENT_PWM, SIZE_HAX_PRESENT_PWM, true);
+            case DXL_CONTROL_ITEM::PRESENT_CURRENT: return set_read_only(ADDR_HAX_PRESENT_CURRENT, SIZE_HAX_PRESENT_CURRENT, true);
+            case DXL_CONTROL_ITEM::PRESENT_VELOCITY: return set_read_only(ADDR_HAX_PRESENT_VELOCITY, SIZE_HAX_PRESENT_VELOCITY, true);
+            case DXL_CONTROL_ITEM::PRESENT_POSITION: return set_read_only(ADDR_HAX_PRESENT_POSITION, SIZE_HAX_PRESENT_POSITION, true);
+            case DXL_CONTROL_ITEM::VELOCITY_TRAJECTORY: return set_read_only(ADDR_HAX_VELOCITY_TRAJECTORY, SIZE_HAX_VELOCITY_TRAJECTORY, true);
+            case DXL_CONTROL_ITEM::POSITION_TRAJECTORY: return set_read_only(ADDR_HAX_POSITION_TRAJECTORY, SIZE_HAX_POSITION_TRAJECTORY, true);
+            case DXL_CONTROL_ITEM::PRESENT_INPUT_VOLTAGE: return set_read_only(ADDR_HAX_PRESENT_INPUT_VOLTAGE, SIZE_HAX_PRESENT_INPUT_VOLTAGE, false);
+            case DXL_CONTROL_ITEM::PRESENT_TEMPERATURE: return set_read_only(ADDR_HAX_PRESENT_TEMPERATURE, SIZE_HAX_PRESENT_TEMPERATURE, false);
+            default: return false;
+        }
+    }
+
     if(family == DXL_MODEL_FAMILY::XX)
     {
         switch(item)
@@ -873,7 +934,7 @@ bool DYNAMIXEL_SDK_INTERFACE::supportsOperatingMode(uint8_t ID, DXL_OPERATING_MO
             || mode == DXL_OPERATING_MODE::EXTENDED_POSITION_MODE;
     }
 
-    if(family == DXL_MODEL_FAMILY::PX)
+    if(family == DXL_MODEL_FAMILY::PX || family == DXL_MODEL_FAMILY::HAX)
     {
         return mode == DXL_OPERATING_MODE::CURRENT_CONTROL_MODE
             || mode == DXL_OPERATING_MODE::VELOCITY_CONTROL_MODE
@@ -1309,6 +1370,27 @@ DXL_DEVICE_INFO DYNAMIXEL_SDK_INTERFACE::makeLegacyH54DeviceInfo()
     return info;
 }
 
+DXL_DEVICE_INFO DYNAMIXEL_SDK_INTERFACE::makeHax54DeviceInfo()
+{
+    DXL_DEVICE_INFO info;
+    info.model_name = "H54-200/100-S500-R(A)";
+    info.family = DXL_MODEL_FAMILY::HAX;
+    info.family_configured = true;
+    info.position_resolution = DXL_MODEL_CONSTANTS::HAX_H54_POSITION_RESOLUTION;
+    info.velocity_unit_rpm = DXL_MODEL_CONSTANTS::HAX_VELOCITY_UNIT_RPM;
+    info.profile_velocity_unit_rpm = DXL_MODEL_CONSTANTS::HAX_VELOCITY_UNIT_RPM;
+    info.current_unit_ampere = DXL_MODEL_CONSTANTS::HAX_CURRENT_UNIT_AMPERE;
+    return info;
+}
+
+DXL_DEVICE_INFO DYNAMIXEL_SDK_INTERFACE::makeHax42DeviceInfo()
+{
+    DXL_DEVICE_INFO info = makeHax54DeviceInfo();
+    info.model_name = "H42-20-S300-R(A)";
+    info.position_resolution = DXL_MODEL_CONSTANTS::HAX_H42_POSITION_RESOLUTION;
+    return info;
+}
+
 DXL_DEVICE_INFO DYNAMIXEL_SDK_INTERFACE::makeCommonXSeriesDeviceInfo()
 {
     DXL_DEVICE_INFO info;
@@ -1363,6 +1445,17 @@ bool DYNAMIXEL_SDK_INTERFACE::makeDeviceInfoForModelNumber(
         case DXL_MODEL_CONSTANTS::LEGACY_H54_100_MODEL_NUMBER:
             detected = makeLegacyH54DeviceInfo();
             detected.model_name = "H54-100-S500-R";
+            break;
+        case DXL_MODEL_CONSTANTS::HAX_H54_200_MODEL_NUMBER:
+            detected = makeHax54DeviceInfo();
+            detected.model_name = "H54-200-S500-R(A)";
+            break;
+        case DXL_MODEL_CONSTANTS::HAX_H54_100_MODEL_NUMBER:
+            detected = makeHax54DeviceInfo();
+            detected.model_name = "H54-100-S500-R(A)";
+            break;
+        case DXL_MODEL_CONSTANTS::HAX_H42_020_MODEL_NUMBER:
+            detected = makeHax42DeviceInfo();
             break;
         default:
             return false;

@@ -1,15 +1,50 @@
 #include <dynamixel_sdk_interface/dynamixel_sdk_interface.hpp>
 
+// Updated 2026-10-07: retain one scan algorithm for both ROS client APIs.
+#if DYNAMIXEL_ROS_VERSION == 2
+#include <rclcpp/rclcpp.hpp>
+#define DXL_INFO(OUT) RCLCPP_INFO_STREAM(private_node->get_logger(), OUT)
+#define DXL_WARN(OUT) RCLCPP_WARN_STREAM(private_node->get_logger(), OUT)
+#define DXL_ERROR(OUT) RCLCPP_ERROR_STREAM(private_node->get_logger(), OUT)
+#elif DYNAMIXEL_ROS_VERSION == 1
 #include <ros/ros.h>
+#define DXL_INFO(OUT) ROS_INFO_STREAM(OUT)
+#define DXL_WARN(OUT) ROS_WARN_STREAM(OUT)
+#define DXL_ERROR(OUT) ROS_ERROR_STREAM(OUT)
+#else
+#error "DYNAMIXEL_ROS_VERSION must be 1 or 2 (set by CMake)."
+#endif
 
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace
 {
+bool rosOk()
+{
+#if DYNAMIXEL_ROS_VERSION == 2
+    return rclcpp::ok();
+#else
+    return ros::ok();
+#endif
+}
+
+struct RosShutdown
+{
+    ~RosShutdown()
+    {
+#if DYNAMIXEL_ROS_VERSION == 2
+        rclcpp::shutdown();
+#else
+        ros::shutdown();
+#endif
+    }
+};
+
 constexpr int MIN_DYNAMIXEL_ID = 0;
 constexpr int MAX_DYNAMIXEL_ID = 252;
 
@@ -23,6 +58,8 @@ const char* familyName(DXL_MODEL_FAMILY family)
             return "XX";
         case DXL_MODEL_FAMILY::HX:
             return "HX";
+        case DXL_MODEL_FAMILY::HAX:
+            return "HAX";
     }
     return "UNKNOWN";
 }
@@ -55,8 +92,15 @@ const char* statusName(DXL_INTERFACE_STATUS status)
 
 int main(int argc, char** argv)
 {
+#if DYNAMIXEL_ROS_VERSION == 2
+    rclcpp::init(argc, argv);
+    RosShutdown shutdown;
+    auto private_node = std::make_shared<rclcpp::Node>("dynamixel_scan");
+#else
     ros::init(argc, argv, "dynamixel_scan");
+    RosShutdown shutdown;
     ros::NodeHandle private_node("~");
+#endif
 
     std::string device_name;
     int baudrate = 0;
@@ -65,32 +109,41 @@ int main(int argc, char** argv)
     int lock_timeout_ms = 0;
     bool show_missing = false;
 
+#if DYNAMIXEL_ROS_VERSION == 2
+    device_name = private_node->declare_parameter<std::string>("device_name", "/dev/ttyUSB0");
+    baudrate = private_node->declare_parameter<int>("baudrate", 4000000);
+    min_id = private_node->declare_parameter<int>("min_id", MIN_DYNAMIXEL_ID);
+    max_id = private_node->declare_parameter<int>("max_id", MAX_DYNAMIXEL_ID);
+    lock_timeout_ms = private_node->declare_parameter<int>("lock_timeout_ms", 20);
+    show_missing = private_node->declare_parameter<bool>("show_missing", false);
+#else
     private_node.param<std::string>("device_name", device_name, "/dev/ttyUSB0");
     private_node.param("baudrate", baudrate, 4000000);
     private_node.param("min_id", min_id, MIN_DYNAMIXEL_ID);
     private_node.param("max_id", max_id, MAX_DYNAMIXEL_ID);
     private_node.param("lock_timeout_ms", lock_timeout_ms, 20);
     private_node.param("show_missing", show_missing, false);
+#endif
 
     if(device_name.empty())
     {
-        ROS_ERROR("Parameter '~device_name' must not be empty.");
+        DXL_ERROR("Parameter 'device_name' must not be empty.");
         return 1;
     }
     if(baudrate <= 0)
     {
-        ROS_ERROR_STREAM("Parameter '~baudrate' must be positive: " << baudrate);
+        DXL_ERROR("Parameter 'baudrate' must be positive: " << baudrate);
         return 1;
     }
     if(min_id < MIN_DYNAMIXEL_ID || max_id > MAX_DYNAMIXEL_ID || min_id > max_id)
     {
-        ROS_ERROR_STREAM("Invalid ID range [" << min_id << ", " << max_id
+        DXL_ERROR("Invalid ID range [" << min_id << ", " << max_id
             << "]. Valid DYNAMIXEL IDs are 0 through 252.");
         return 1;
     }
     if(lock_timeout_ms <= 0)
     {
-        ROS_ERROR_STREAM("Parameter '~lock_timeout_ms' must be positive: "
+        DXL_ERROR("Parameter 'lock_timeout_ms' must be positive: "
             << lock_timeout_ms);
         return 1;
     }
@@ -102,13 +155,13 @@ int main(int argc, char** argv)
     if(!interface.isPortOpen())
     {
         const DXL_INTERFACE_RESULT result = interface.getLastResult();
-        ROS_ERROR_STREAM("Failed to open " << device_name << " at " << baudrate
+        DXL_ERROR("Failed to open " << device_name << " at " << baudrate
             << " bps: status=" << statusName(result.status)
             << ", communication_result=" << result.communication_result);
         return 2;
     }
 
-    ROS_INFO_STREAM("Scanning DYNAMIXEL Protocol 2.0 IDs " << min_id << " through "
+    DXL_INFO("Scanning DYNAMIXEL Protocol 2.0 IDs " << min_id << " through "
         << max_id << " on " << device_name << " at " << baudrate << " bps.");
 
     int found_count = 0;
@@ -122,7 +175,7 @@ int main(int argc, char** argv)
         if(result.status != DXL_INTERFACE_STATUS::COMMUNICATION_ERROR
             || result.communication_result != COMM_RX_TIMEOUT)
         {
-            ROS_ERROR_STREAM("Broadcast ping failed: status=" << statusName(result.status)
+            DXL_ERROR("Broadcast ping failed: status=" << statusName(result.status)
                 << ", communication_result=" << result.communication_result
                 << ", device_error=" << static_cast<int>(result.device_error));
             return 3;
@@ -134,7 +187,7 @@ int main(int argc, char** argv)
         std::unique(detected_ids.begin(), detected_ids.end()), detected_ids.end());
 
     std::vector<bool> responded(MAX_DYNAMIXEL_ID + 1, false);
-    for(std::size_t index = 0; index < detected_ids.size() && ros::ok(); ++index)
+    for(std::size_t index = 0; index < detected_ids.size() && rosOk(); ++index)
     {
         const int id = detected_ids[index];
         if(id < min_id || id > max_id)
@@ -147,7 +200,7 @@ int main(int argc, char** argv)
         {
             const DXL_INTERFACE_RESULT result = interface.getLastResult();
             ++unexpected_error_count;
-            ROS_WARN_STREAM("[ID " << id << "] discovered, but model query failed: status="
+            DXL_WARN("[ID " << id << "] discovered, but model query failed: status="
                 << statusName(result.status)
                 << ", communication_result=" << result.communication_result
                 << ", device_error=" << static_cast<int>(result.device_error));
@@ -159,7 +212,7 @@ int main(int argc, char** argv)
         {
             interface.setDeviceInfo(static_cast<uint8_t>(id), info);
             ++recognized_count;
-            ROS_INFO_STREAM("[ID " << id << "] model=" << info.model_name
+            DXL_INFO("[ID " << id << "] model=" << info.model_name
                 << " (" << model_number << ")"
                 << ", family=" << familyName(info.family)
                 << ", position_resolution="
@@ -167,7 +220,7 @@ int main(int argc, char** argv)
         }
         else
         {
-            ROS_WARN_STREAM("[ID " << id << "] model_number=" << model_number
+            DXL_WARN("[ID " << id << "] model_number=" << model_number
                 << " is present but not registered in the built-in model table.");
         }
     }
@@ -177,23 +230,23 @@ int main(int argc, char** argv)
         for(int id = min_id; id <= max_id; ++id)
         {
             if(!responded[id])
-                ROS_INFO_STREAM("[ID " << id << "] no response");
+                DXL_INFO("[ID " << id << "] no response");
         }
     }
 
-    if(!ros::ok())
+    if(!rosOk())
     {
-        ROS_WARN("DYNAMIXEL scan interrupted.");
+        DXL_WARN("DYNAMIXEL scan interrupted.");
         return 130;
     }
 
-    ROS_INFO_STREAM("Scan complete: found=" << found_count
+    DXL_INFO("Scan complete: found=" << found_count
         << ", recognized=" << recognized_count
         << ", unexpected_errors=" << unexpected_error_count << '.');
 
     if(found_count == 0)
     {
-        ROS_ERROR("No DYNAMIXEL responded. Check port exclusivity, baudrate, power, and wiring.");
+        DXL_ERROR("No DYNAMIXEL responded. Check port exclusivity, baudrate, power, and wiring.");
         return 3;
     }
 

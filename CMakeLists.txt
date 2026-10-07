@@ -1,218 +1,78 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(dynamixel_sdk_interface)
+# Updated 2026-10-07: build the same library and scanner with ROS1 or ROS2.
+cmake_minimum_required(VERSION 3.5)
+project(dynamixel_sdk_interface VERSION 0.0.0 LANGUAGES CXX)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
-
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-    lib_functions
-    dynamixel_sdk
-    roscpp
-)
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
-
-################################################
-## Declare ROS messages, services and actions ##
-################################################
-
-## To declare and build messages, services or actions from within this
-## package, follow these steps:
-## * Let MSG_DEP_SET be the set of packages whose message types you use in
-##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
-## * In the file package.xml:
-##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
-##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
-##     but can be declared for certainty nonetheless:
-##     * add a exec_depend tag for "message_runtime"
-## * In this file (CMakeLists.txt):
-##   * add "message_generation" and every package in MSG_DEP_SET to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * add "message_runtime" and every package in MSG_DEP_SET to
-##     catkin_package(CATKIN_DEPENDS ...)
-##   * uncomment the add_*_files sections below as needed
-##     and list every .msg/.srv/.action file to be processed
-##   * uncomment the generate_messages entry below
-##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
-
-## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
-
-## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
-
-## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
-
-## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
-
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
-
-###################################
-## catkin specific configuration ##
-###################################
-## The catkin_package macro generates cmake config files for your package
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
+set(DYNAMIXEL_ROS_VERSION "$ENV{ROS_VERSION}" CACHE STRING "ROS major version: 1 or 2")
+if(DYNAMIXEL_ROS_VERSION STREQUAL "1")
+  find_package(catkin REQUIRED COMPONENTS lib_functions dynamixel_sdk roscpp)
+  catkin_package(
     INCLUDE_DIRS include
-    LIBRARIES dynamixel_sdk_interface
-    CATKIN_DEPENDS lib_functions dynamixel_sdk roscpp
-#  DEPENDS system_lib
-)
+    LIBRARIES ${PROJECT_NAME}
+    CATKIN_DEPENDS lib_functions dynamixel_sdk)
+elseif(DYNAMIXEL_ROS_VERSION STREQUAL "2")
+  find_package(ament_cmake REQUIRED)
+  find_package(lib_functions REQUIRED)
+  find_package(dynamixel_sdk REQUIRED)
+  find_package(rclcpp REQUIRED)
+else()
+  message(FATAL_ERROR "Source the ROS1 or ROS2 setup file before building (ROS_VERSION=1 or 2).")
+endif()
+find_package(Threads REQUIRED)
 
-###########
-## Build ##
-###########
+# The public interface and communication library do not depend on a ROS client API.
+add_library(${PROJECT_NAME} SHARED src/dynamixel_sdk_interface.cpp)
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads)
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-)
+add_executable(dynamixel_scan_node src/dynamixel_scan_node.cpp)
+target_compile_definitions(dynamixel_scan_node PRIVATE DYNAMIXEL_ROS_VERSION=${DYNAMIXEL_ROS_VERSION})
+target_link_libraries(dynamixel_scan_node PUBLIC ${PROJECT_NAME})
 
-## Declare a C++ library
-add_library(${PROJECT_NAME}
-    src/dynamixel_sdk_interface.cpp
-)
+# Hardware-free control-table/model/unit regression checks.
+include(CTest)
+if(BUILD_TESTING AND (DYNAMIXEL_ROS_VERSION STREQUAL "2" OR CATKIN_ENABLE_TESTING))
+  add_executable(dynamixel_hax_control_table_test test/test_hax.cpp)
+  target_link_libraries(dynamixel_hax_control_table_test PRIVATE ${PROJECT_NAME})
+  add_test(NAME dynamixel_hax_control_table COMMAND dynamixel_hax_control_table_test)
+endif()
 
-add_executable(dynamixel_scan_node
-    src/dynamixel_scan_node.cpp
-)
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/dynamixel_sdk_interface_node.cpp)
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-)
-
-target_link_libraries(dynamixel_scan_node
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-)
-
-#############
-## Install ##
-#############
-
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark executables for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark libraries for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME} dynamixel_scan_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.hpp"
-)
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
-install(DIRECTORY launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
-)
-
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_dynamixel_sdk_interface.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+if(DYNAMIXEL_ROS_VERSION STREQUAL "1")
+  target_include_directories(${PROJECT_NAME} PUBLIC ${catkin_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} PUBLIC ${dynamixel_sdk_LIBRARIES})
+  target_link_libraries(dynamixel_scan_node PUBLIC ${catkin_LIBRARIES})
+  if(catkin_EXPORTED_TARGETS)
+    add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+  endif()
+  install(TARGETS ${PROJECT_NAME} dynamixel_scan_node
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+  install(DIRECTORY include/${PROJECT_NAME}/
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
+  install(FILES launch/dynamixel_scan.launch
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
+  install(FILES README.md LICENSE DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+else()
+  ament_target_dependencies(${PROJECT_NAME} PUBLIC lib_functions dynamixel_sdk)
+  target_compile_features(dynamixel_scan_node PRIVATE cxx_std_17)
+  ament_target_dependencies(dynamixel_scan_node PUBLIC rclcpp)
+  install(TARGETS ${PROJECT_NAME}
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include)
+  install(TARGETS dynamixel_scan_node DESTINATION lib/${PROJECT_NAME})
+  install(DIRECTORY include/ DESTINATION include)
+  install(FILES launch/dynamixel_scan.launch.py DESTINATION share/${PROJECT_NAME}/launch)
+  install(FILES README.md LICENSE DESTINATION share/${PROJECT_NAME})
+  ament_export_include_directories(include)
+  ament_export_libraries(${PROJECT_NAME})
+  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+  ament_export_dependencies(lib_functions dynamixel_sdk)
+  ament_package(CONFIG_EXTRAS cmake/dynamixel_sdk_interface-extras.cmake)
+endif()
