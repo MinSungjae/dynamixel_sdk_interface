@@ -1,0 +1,21 @@
+<launch>
+  <arg name="device_name" default="/dev/ttyUSB0" />
+  <arg name="baudrate" default="4000000" />
+  <arg name="min_id" default="0" />
+  <arg name="max_id" default="252" />
+  <arg name="lock_timeout_ms" default="20" />
+  <arg name="show_missing" default="false" />
+
+  <node pkg="dynamixel_sdk_interface"
+        type="dynamixel_scan_node"
+        name="dynamixel_scan"
+        output="screen"
+        required="false">
+    <param name="device_name" value="$(arg device_name)" />
+    <param name="baudrate" value="$(arg baudrate)" />
+    <param name="min_id" value="$(arg min_id)" />
+    <param name="max_id" value="$(arg max_id)" />
+    <param name="lock_timeout_ms" value="$(arg lock_timeout_ms)" />
+    <param name="show_missing" value="$(arg show_missing)" />
+  </node>
+</launch>
